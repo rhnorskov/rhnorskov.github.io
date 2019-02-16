@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Aeonik</title>
+    <style>
+      @font-face {
+        font-family: "Aeonik-Variable";
+        src: url(Aeonik_VariableGX.ttf);
+      }
+
+      body {
+        font-size: 30vw;
+        line-height: 1em;
+        font-family: Aeonik-Variable;
+        margin: 0;
+      }
+
+      #root {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      span {
+        cursor: default;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script
+      crossorigin
+      src="https://unpkg.com/@babel/standalone/babel.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@16/umd/react.development.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"
+    ></script>
+
+    <script type="text/babel">
+      const { useState, useEffect, useRef } = React;
+
+      function VariableText({ children, ...props }) {
+        const ref = useRef(null);
+        const [width, setWidth] = useState(null);
+
+        useEffect(() => setWidth(ref.current.getBoundingClientRect().width));
+
+        return (
+          <span ref={ref} {...props}>
+            {children.split("").map(letter => (
+              <VariableLetter key={letter} containerWidth={width}>
+                {letter}
+              </VariableLetter>
+            ))}
+          </span>
+        );
+      }
+
+      function VariableLetter({ containerWidth = null, children }) {
+        const textRef = useRef(null);
+
+        function handleMouseMove({ clientX, clientY }) {
+          if (containerWidth === null) return;
+
+          const {
+            width,
+            height,
+            x,
+            y
+          } = textRef.current.getBoundingClientRect();
+          const originX = Math.round(width / 2) + x;
+          const originY = Math.round(height / 2) + y;
+          const mouseDistanceToOrigin = Math.sqrt(
+            Math.pow(originX - clientX, 2) + Math.pow(originY - clientY, 2)
+          );
+          const ratio = containerWidth * 0.7;
+          const distancePercentage =
+            ((ratio - mouseDistanceToOrigin) / ratio) * 100;
+          const distancePercentageCapped = Math.min(
+            Math.max(Math.round(distancePercentage), 10),
+            100
+          );
+
+          textRef.current.style.fontVariationSettings = `"wght" ${(distancePercentageCapped /
+            100) *
+            (184 - 8)}, "wdth" 100`;
+        }
+
+        useEffect(() => {
+          window.addEventListener("mousemove", handleMouseMove);
+          return () => window.removeEventListener("mousemove", handleMouseMove);
+        });
+
+        return <span ref={textRef}>{children}</span>;
+      }
+
+      function App() {
+        return (
+          <div>
+            <VariableText>Aeonik</VariableText>
+          </div>
+        );
+      }
+
+      ReactDOM.render(<App />, document.getElementById("root"));
+    </script>
+  </body>
+</html>
